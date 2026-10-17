@@ -17,11 +17,28 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
+// Welcome / Root endpoint for browser visits
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'AU APP Emergency SOS REST API is running live!',
+    version: '1.0.0',
+    status: 'online',
+    healthCheck: '/health',
+    endpoints: {
+      auth: ['POST /auth/register', 'POST /auth/login', 'GET /auth/me'],
+      contacts: ['GET /contacts', 'POST /contacts', 'PUT /contacts/:id', 'DELETE /contacts/:id'],
+      sos: ['POST /sos/log', 'GET /sos/history']
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    service: 'DailyKit SOS REST API',
+    service: 'AU APP Emergency SOS REST API',
     timestamp: new Date().toISOString()
   });
 });
@@ -51,4 +68,3 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
-
