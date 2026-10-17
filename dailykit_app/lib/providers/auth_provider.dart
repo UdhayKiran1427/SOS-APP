@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
@@ -27,7 +28,6 @@ class AuthProvider extends ChangeNotifier {
       final user = await _api.getProfile();
       _currentUser = user;
       if (_currentUser != null) {
-        // Trigger background sync
         SyncService.instance.syncAll();
       }
     } catch (_) {
@@ -38,6 +38,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  String _formatError(dynamic e) {
+    if (e is DioException) {
+      if (e.response != null && e.response?.data is Map) {
+        final data = e.response!.data as Map;
+        if (data['message'] != null) return data['message'].toString();
+      }
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        return 'Server connection timed out. Please try again.';
+      }
+      if (e.response?.statusCode == 404) {
+        return 'Server endpoint not found. Please verify backend deployment.';
+      }
+      return 'Unable to reach backend server. Please check internet connection.';
+    }
+    return e.toString().replaceAll('Exception: ', '');
+  }
+
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
@@ -45,13 +62,12 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _currentUser = await _api.login(email, password);
-      // Background sync contacts & alerts
       SyncService.instance.syncAll();
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = _formatError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -70,7 +86,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = _formatError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -84,4 +100,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

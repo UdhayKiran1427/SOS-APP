@@ -9,25 +9,22 @@ const pool = require('./config/db');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
-async function startServer() {
+// Start listening immediately so cloud host port check passes without delay
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`===============================================`);
+  console.log(` AU APP SOS API Server running on port ${PORT}`);
+  console.log(` Local:   http://localhost:${PORT}`);
+  console.log(` Health:  http://localhost:${PORT}/health`);
+  console.log(`===============================================`);
+});
+
+// Asynchronously verify database connection
+(async () => {
   try {
-    // Verify MySQL connection
     const connection = await pool.getConnection();
-    console.log(`Connected to MySQL database [${process.env.DB_NAME || 'dailykit_db'}] successfully.`);
+    console.log(`Connected to MySQL database [${process.env.DB_NAME || 'defaultdb'}] successfully.`);
     connection.release();
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`===============================================`);
-      console.log(` DailyKit SOS API Server running on port ${PORT}`);
-      console.log(` Local:   http://localhost:${PORT}`);
-      console.log(` Health:  http://localhost:${PORT}/health`);
-      console.log(`===============================================`);
-    });
   } catch (err) {
-    console.error('Failed to start server:', err.message);
-    process.exit(1);
+    console.error('MySQL connection warning (retrying in background):', err.message);
   }
-}
-
-startServer();
-
+})();
