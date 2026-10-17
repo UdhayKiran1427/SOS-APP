@@ -10,8 +10,8 @@ class ApiService {
   late final Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // For Android emulator 10.0.2.2 or physical phone over adb reverse localhost:3000
-  static const String defaultBaseUrl = 'http://10.0.2.2:3000';
+  // Live Render Production API
+  static const String defaultBaseUrl = 'https://sos-app-3188.onrender.com';
   String _baseUrl = defaultBaseUrl;
 
   ApiService._internal() {
