@@ -1,0 +1,23 @@
+# Node modules & Environment
+**/node_modules/
+**/.env
+**/.env.local
+
+# Flutter & Dart artifacts
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+
+# Android build outputs
+**/android/.gradle/
+**/android/local.properties
+**/android/app/build/
+**/*.iml
+
+# VS Code & IDE
+.vscode/
+.idea/
+*.swp
+*.DS_Store

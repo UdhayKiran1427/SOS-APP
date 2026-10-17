@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AU APP</string>
+    <string name="widget_description">AU APP Quick SOS Emergency Trigger</string>
+    <string name="tile_label">AU APP SOS</string>
+</resources>
