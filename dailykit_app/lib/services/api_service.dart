@@ -27,7 +27,7 @@ class ApiService {
       ),
     );
 
-    // Add interceptor for dynamic auth token injection
+    // Add interceptor for dynamic auth token injection & seamless failover
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -37,12 +37,64 @@ class ApiService {
           }
           return handler.next(options);
         },
-        onError: (DioException error, handler) {
-          // Log or handle centralized errors
+        onError: (DioException error, handler) async {
+          final is404OrConnectionFail = (error.response?.statusCode == 404 ||
+              error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout);
+
+          // If failing against Render, attempt seamless fallback to local server (adb reverse)
+          if (is404OrConnectionFail && _baseUrl.contains('onrender.com')) {
+            try {
+              const fallbackUrl = 'http://127.0.0.1:3000';
+              final options = Options(
+                method: error.requestOptions.method,
+                headers: error.requestOptions.headers,
+              );
+              final newUrl = '$fallbackUrl${error.requestOptions.path}';
+              final response = await Dio().request(
+                newUrl,
+                data: error.requestOptions.data,
+                queryParameters: error.requestOptions.queryParameters,
+                options: options,
+              );
+              // Fallback succeeded! Switch base URL and persist
+              updateBaseUrl(fallbackUrl);
+              await saveServerUrl(fallbackUrl);
+              return handler.resolve(response);
+            } catch (_) {
+              // fallback also failed, forward original error
+            }
+          }
           return handler.next(error);
         },
       ),
     );
+  }
+
+  Future<void> init() async {
+    final savedUrl = await _storage.read(key: 'custom_server_url');
+    if (savedUrl != null && savedUrl.isNotEmpty) {
+      updateBaseUrl(savedUrl);
+    }
+  }
+
+  Future<void> saveServerUrl(String url) async {
+    await _storage.write(key: 'custom_server_url', value: url);
+    updateBaseUrl(url);
+  }
+
+  Future<bool> checkHealth([String? testUrl]) async {
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: testUrl ?? _baseUrl,
+        connectTimeout: const Duration(seconds: 4),
+        receiveTimeout: const Duration(seconds: 4),
+      ));
+      final res = await dio.get('/health');
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 
   void updateBaseUrl(String newUrl) {

@@ -403,17 +403,43 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Account Profile'),
+        title: const Row(
+          children: [
+            Icon(Icons.account_circle, color: Colors.blueAccent),
+            SizedBox(width: 8),
+            Text('User Profile'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Name: ${user?.name ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text('Email: ${user?.email ?? "N/A"}'),
+            Text('Name: ${user?.name ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 4),
+            Text('Email: ${user?.email.isNotEmpty == true ? user!.email : "Local Offline User"}', style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withAlpha(40),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade400),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.sd_storage, size: 16, color: Colors.green),
+                  const SizedBox(width: 6),
+                  Text(
+                    auth.isLocalStorageMode ? 'Mode: Local Storage (SQLite)' : 'Mode: Cloud Synced',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             const Text(
-              'Your contacts and alert history are automatically backed up to MySQL cloud when online.',
+              'All your emergency contacts and SOS alert logs are stored safely on your phone storage.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -429,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.of(ctx).pop();
               await auth.logout();
             },
-            child: const Text('Sign Out'),
+            child: const Text('Clear Profile'),
           ),
         ],
       ),

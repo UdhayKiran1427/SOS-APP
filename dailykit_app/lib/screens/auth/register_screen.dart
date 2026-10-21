@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/server_config_dialog.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -29,14 +30,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final auth = context.read<AuthProvider>();
+    final name = _nameController.text.trim();
     final success = await auth.register(
-      _nameController.text.trim(),
+      name,
       _emailController.text.trim(),
       _passwordController.text,
     );
 
     if (mounted) {
       if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account ready! Saved in Local Storage.'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
         Navigator.of(context).pop();
       } else if (auth.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -49,13 +57,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _handleLocalStorageOnly() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your name')),
+      );
+      return;
+    }
+
+    final auth = context.read<AuthProvider>();
+    final success = await auth.saveLocalProfile(
+      name: name,
+      email: _emailController.text.trim(),
+    );
+
+    if (mounted && success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Welcome $name! Local Storage profile activated.'),
+          backgroundColor: Colors.green.shade700,
+        ),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        title: const Text('Create Account'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dns_outlined),
+            tooltip: 'Server Settings',
+            onPressed: () => ServerConfigDialog.show(context),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -161,6 +204,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Create Account',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Offline / Local Storage button
+                  OutlinedButton.icon(
+                    onPressed: auth.isLoading ? null : _handleLocalStorageOnly,
+                    icon: const Icon(Icons.sd_storage_outlined, size: 18),
+                    label: const Text('Continue Offline (Local Storage)'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                   const SizedBox(height: 16),
 

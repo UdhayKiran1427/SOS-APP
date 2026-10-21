@@ -242,5 +242,45 @@ class DatabaseHelper {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  // ================= LOCAL STORAGE USER PROFILE =================
+
+  Future<void> saveLocalUserProfile({
+    required String name,
+    required String email,
+    String? phone,
+  }) async {
+    await setSetting('local_user_name', name);
+    await setSetting('local_user_email', email);
+    if (phone != null && phone.isNotEmpty) {
+      await setSetting('local_user_phone', phone);
+    }
+    await setSetting('storage_mode', 'local');
+  }
+
+  Future<Map<String, String>?> getLocalUserProfile() async {
+    final name = await getSetting('local_user_name');
+    final email = await getSetting('local_user_email');
+    final phone = await getSetting('local_user_phone');
+
+    if (name != null && name.isNotEmpty) {
+      return {
+        'name': name,
+        'email': email ?? '',
+        'phone': phone ?? '',
+      };
+    }
+    return null;
+  }
+
+  Future<void> clearLocalUserProfile() async {
+    final db = await database;
+    await db.delete('app_settings', where: 'key IN (?, ?, ?, ?)', whereArgs: [
+      'local_user_name',
+      'local_user_email',
+      'local_user_phone',
+      'storage_mode',
+    ]);
+  }
 }
 

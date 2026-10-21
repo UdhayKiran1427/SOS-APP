@@ -4,8 +4,11 @@ import 'providers/auth_provider.dart';
 import 'providers/contacts_provider.dart';
 import 'screens/home/home_screen.dart';
 
+import 'services/api_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.instance.init();
   runApp(const DailyKitSosApp());
 }
 
