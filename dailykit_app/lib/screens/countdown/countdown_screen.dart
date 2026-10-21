@@ -4,7 +4,6 @@ import 'package:vibration/vibration.dart';
 import '../../services/location_service.dart';
 import '../../services/sms_service.dart';
 import '../../services/database_helper.dart';
-import '../../services/sync_service.dart';
 import '../../models/contact_model.dart';
 import '../../models/alert_model.dart';
 import 'sos_result_dialog.dart';
@@ -147,9 +146,6 @@ class _CountdownScreenState extends State<CountdownScreen> with SingleTickerProv
     );
 
     await DatabaseHelper.instance.insertAlert(localAlert);
-
-    // 5. Trigger background cloud sync if online
-    SyncService.instance.syncAll();
 
     if (mounted) {
       // Pop countdown screen

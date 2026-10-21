@@ -445,17 +445,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          OutlinedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+            child: const Text('Edit Profile'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Close'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await auth.logout();
-            },
-            child: const Text('Clear Profile'),
           ),
         ],
       ),

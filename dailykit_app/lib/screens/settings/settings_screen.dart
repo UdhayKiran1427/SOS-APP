@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/database_helper.dart';
 import '../../services/sms_service.dart';
-import '../../services/api_service.dart';
 import '../../services/permission_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -19,9 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _messageTemplateController = TextEditingController(
     text: 'I need help. My location: {location} (sent {datetime})',
   );
-  final TextEditingController _apiUrlController = TextEditingController(
-    text: ApiService.instance.baseUrl,
-  );
   final TextEditingController _testPhoneController = TextEditingController();
 
   bool _isLoading = true;
@@ -37,7 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _countryCodeController.dispose();
     _messageTemplateController.dispose();
-    _apiUrlController.dispose();
     _testPhoneController.dispose();
     super.dispose();
   }
@@ -61,12 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _db.setSetting('countdown_enabled', _countdownEnabled ? 'true' : 'false');
     await _db.setSetting('default_country_code', _countryCodeController.text.trim());
     await _db.setSetting('message_template', _messageTemplateController.text.trim());
-
-    // Update API Base URL
-    final newUrl = _apiUrlController.text.trim();
-    if (newUrl.isNotEmpty) {
-      ApiService.instance.updateBaseUrl(newUrl);
-    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -199,22 +188,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Backend API Section
-          _buildSectionHeader('BACKEND SERVER CONNECTION'),
+          // Local Storage Section
+          _buildSectionHeader('STORAGE & PRIVACY'),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  TextFormField(
-                    controller: _apiUrlController,
-                    decoration: InputDecoration(
-                      labelText: 'API Base URL',
-                      hintText: 'http://10.0.2.2:3000 or http://localhost:3000',
-                      helperText: 'Use http://localhost:3000 with: adb reverse tcp:3000 tcp:3000',
-                      prefixIcon: const Icon(Icons.dns_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  Icon(Icons.sd_storage_rounded, color: Colors.green, size: 28),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '100% Offline Local Storage',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'All data (profile, contacts, SOS history) is stored privately inside this phone. No external server used.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
                 ],

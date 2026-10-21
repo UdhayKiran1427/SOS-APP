@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/database_helper.dart';
-import '../../services/sync_service.dart';
 import '../../services/sms_service.dart';
 import '../../models/alert_model.dart';
 
@@ -38,7 +37,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _refreshAndSync() async {
-    await SyncService.instance.syncAll();
     await _loadAlerts();
   }
 

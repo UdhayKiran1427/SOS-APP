@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import '../models/contact_model.dart';
 import '../services/database_helper.dart';
-import '../services/sync_service.dart';
 
 class ContactsProvider extends ChangeNotifier {
   final DatabaseHelper _db = DatabaseHelper.instance;
-  final SyncService _syncService = SyncService.instance;
 
   List<ContactModel> _contacts = [];
   bool _isLoading = false;
@@ -72,9 +70,6 @@ class ContactsProvider extends ChangeNotifier {
       _contacts.sort((a, b) => a.priority.compareTo(b.priority));
       _errorMessage = null;
       notifyListeners();
-
-      // Trigger background sync to MySQL
-      _syncService.syncAll();
       return true;
     } catch (e) {
       _errorMessage = 'Error adding contact: $e';
@@ -97,8 +92,6 @@ class ContactsProvider extends ChangeNotifier {
       }
       _errorMessage = null;
       notifyListeners();
-
-      _syncService.syncAll();
       return true;
     } catch (e) {
       _errorMessage = 'Error updating contact: $e';
@@ -113,8 +106,6 @@ class ContactsProvider extends ChangeNotifier {
       _contacts.removeWhere((c) => c.id == id);
       _errorMessage = null;
       notifyListeners();
-
-      _syncService.syncAll();
       return true;
     } catch (e) {
       _errorMessage = 'Error deleting contact: $e';
@@ -154,12 +145,7 @@ class ContactsProvider extends ChangeNotifier {
   }
 
   Future<void> syncWithCloud() async {
-    _isLoading = true;
-    notifyListeners();
-    await _syncService.syncAll();
-    _contacts = await _db.getContacts();
-    _isLoading = false;
-    notifyListeners();
+    await loadContacts();
   }
 }
 
