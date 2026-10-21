@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/contacts_provider.dart';
+import 'providers/chat_provider.dart';
 import 'screens/home/home_screen.dart';
 
 void main() async {
@@ -18,6 +19,7 @@ class DailyKitSosApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ContactsProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         title: 'AU APP',

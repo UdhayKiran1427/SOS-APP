@@ -10,6 +10,7 @@ import '../contacts/contacts_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
 import '../auth/login_screen.dart';
+import '../chat/chats_screen.dart';
 import '../consent/consent_dialog.dart';
 import '../countdown/countdown_screen.dart';
 
@@ -167,6 +168,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('AU APP', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            tooltip: 'Chats',
+            icon: const Icon(Icons.chat_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChatsScreen()),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Alert History',
             icon: const Icon(Icons.history_rounded),
@@ -349,16 +359,29 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ChatsScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                    label: const Text('Chats'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                   OutlinedButton.icon(
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ContactsScreen()),
                       );
                     },
-                    icon: const Icon(Icons.people_alt_outlined),
+                    icon: const Icon(Icons.people_alt_outlined, size: 18),
                     label: const Text('Contacts'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -368,10 +391,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (_) => const HistoryScreen()),
                       );
                     },
-                    icon: const Icon(Icons.history_rounded),
+                    icon: const Icon(Icons.history_rounded, size: 18),
                     label: const Text('History'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -381,10 +404,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (_) => const SettingsScreen()),
                       );
                     },
-                    icon: const Icon(Icons.settings_outlined),
+                    icon: const Icon(Icons.settings_outlined, size: 18),
                     label: const Text('Settings'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),

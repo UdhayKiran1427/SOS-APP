@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/contact_model.dart';
 import '../models/alert_model.dart';
+import '../models/chat_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
@@ -20,11 +21,50 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'dailykit_sos.db');
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 1,
-      onCreate: _createDb,
+      version: 2,
+      onCreate: (db, version) async {
+        await _createDb(db, version);
+        await _createChatTables(db);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _createChatTables(db);
+        }
+      },
     );
+
+    // Ensure chat tables exist even if opened previously without onUpgrade
+    await _createChatTables(db);
+    return db;
+  }
+
+  Future<void> _createChatTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS chats (
+        id TEXT PRIMARY KEY,
+        peer_id TEXT NOT NULL,
+        peer_name TEXT NOT NULL,
+        peer_phone TEXT NOT NULL,
+        last_message TEXT,
+        last_message_time TEXT,
+        unread_count INTEGER DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        chat_id TEXT NOT NULL,
+        sender_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        type TEXT DEFAULT 'text',
+        status TEXT DEFAULT 'sent',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _createDb(Database db, int version) async {
@@ -281,6 +321,113 @@ class DatabaseHelper {
       'local_user_phone',
       'storage_mode',
     ]);
+  }
+
+  // ================= CHATS & MESSAGES CRUD =================
+
+  Future<List<ChatConversation>> getChats() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'chats',
+      orderBy: 'last_message_time DESC',
+    );
+    return maps.map((m) => ChatConversation.fromMap(m)).toList();
+  }
+
+  Future<ChatConversation> getOrCreateChat({
+    required String peerName,
+    required String peerPhone,
+  }) async {
+    final db = await database;
+    final cleanPhone = peerPhone.replaceAll(RegExp(r'\s+'), '');
+    final chatId = 'chat_${cleanPhone.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
+
+    final existing = await db.query(
+      'chats',
+      where: 'id = ?',
+      whereArgs: [chatId],
+      limit: 1,
+    );
+
+    if (existing.isNotEmpty) {
+      return ChatConversation.fromMap(existing.first);
+    }
+
+    final newChat = ChatConversation(
+      id: chatId,
+      peerId: cleanPhone,
+      peerName: peerName.trim().isNotEmpty ? peerName.trim() : cleanPhone,
+      peerPhone: cleanPhone,
+      lastMessage: null,
+      lastMessageTime: DateTime.now(),
+      unreadCount: 0,
+    );
+
+    await db.insert('chats', newChat.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    return newChat;
+  }
+
+  Future<void> deleteChat(String chatId) async {
+    final db = await database;
+    await db.delete('chat_messages', where: 'chat_id = ?', whereArgs: [chatId]);
+    await db.delete('chats', where: 'id = ?', whereArgs: [chatId]);
+  }
+
+  Future<List<ChatMessage>> getMessages(String chatId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'chat_messages',
+      where: 'chat_id = ?',
+      whereArgs: [chatId],
+      orderBy: 'created_at ASC',
+    );
+    return maps.map((m) => ChatMessage.fromMap(m)).toList();
+  }
+
+  Future<void> insertChatMessage(ChatMessage message) async {
+    final db = await database;
+    await db.insert(
+      'chat_messages',
+      message.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    // Update conversation preview
+    await db.update(
+      'chats',
+      {
+        'last_message': message.content,
+        'last_message_time': message.createdAt.toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [message.chatId],
+    );
+  }
+
+  Future<void> updateMessageStatus(String messageId, String status) async {
+    final db = await database;
+    await db.update(
+      'chat_messages',
+      {'status': status},
+      where: 'id = ?',
+      whereArgs: [messageId],
+    );
+  }
+
+  Future<void> markChatAsRead(String chatId) async {
+    final db = await database;
+    await db.update(
+      'chats',
+      {'unread_count': 0},
+      where: 'id = ?',
+      whereArgs: [chatId],
+    );
+    await db.update(
+      'chat_messages',
+      {'status': 'read'},
+      where: 'chat_id = ? AND sender_id != ?',
+      whereArgs: [chatId, 'me'],
+    );
   }
 }
 
